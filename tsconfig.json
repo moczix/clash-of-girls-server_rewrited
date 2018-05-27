@@ -8,14 +8,9 @@
     "noEmitOnError": true,
     "outDir": "./dist",
     "baseUrl": ".",
-    "paths": {
-      "~/*": [
-        "src/*"
-      ],
-      "*": [
-        "./node_modules/*"
-      ]
-    }
+      "paths": {
+        "*": ["*", "src/*"]
+      }
   },
   "exclude": [
     "node_modules"

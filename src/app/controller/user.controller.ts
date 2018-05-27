@@ -1,26 +1,27 @@
-import {RequestMapping, Get, Post, response, param} from '../../util/decorators/rest.decorator';
+import {
+    Get,
+    response,
+    param,
+    RequestMapping,
+    InjectRepository
+} from '../../custom-rest/decorators/rest.decorator';
+import {UserRepository} from "../repository/user.repository";
 
+// @Authenticated()
 @RequestMapping("/")
 export class UserController {
 
-    @Get("test")
-    test(req, res) {
-        console.log("test");
-        res.send('test function')
-    }
+    @InjectRepository('UserRepository')
+    private userRepository: UserRepository = null;
+
 
     @Get("test2/:id")
-    test2(@param('id') id: number, @response() res) {
+    async test2(@param('id') id: number, @response() res) {
         console.log(id);
-        const object = {test: 1, gowno: "dwa"}
+        const object = await this.userRepository.findAll();
         res.send(object)
     }
 
-    @Post("gowno")
-    testPost(req, res) {
-        console.log("test");
-        res.send('test function')
-    }
 
 
 }
