@@ -26,50 +26,59 @@ export function getRestMethod(method: string, object, prototypeKey: string): str
 }
 
 export function Get(path: string) {
-    return  (target: Object, propertyKey: string | symbol, descriptor: any) => {
-        descriptor.value = processDescriptor(descriptor.value, target);//method param dependency injection
+    return (target: Object, propertyKey: string, descriptor: any) => {
+        descriptor.value = processDescriptor(descriptor.value, target, propertyKey);//method param dependency injection
        return Reflect.defineMetadata("custom:annotation:rest-get", path, target, propertyKey);
     }
 }
 
 export function Put(path: string) {
-    return  (target: Object, propertyKey: string | symbol, descriptor: any) => {
-        descriptor.value = processDescriptor(descriptor.value, target); //method param dependency injection
+    return (target: Object, propertyKey: string, descriptor: any) => {
+        descriptor.value = processDescriptor(descriptor.value, target, propertyKey); //method param dependency injection
         return Reflect.defineMetadata("custom:annotation:rest-put", path, target, propertyKey);
     }
 }
 
 export function Post(path: string) {
-    return  (target: Object, propertyKey: string | symbol, descriptor: any) => {
-        descriptor.value = processDescriptor(descriptor.value, target); //method param dependency injection
+    return (target: Object, propertyKey: string, descriptor: any) => {
+        descriptor.value = processDescriptor(descriptor.value, target, propertyKey); //method param dependency injection
         return Reflect.defineMetadata("custom:annotation:rest-post", path, target, propertyKey);
     }
 }
 
 export function Delete(path: string) {
-    return  (target: Object, propertyKey: string | symbol, descriptor: any) => {
-        descriptor.value = processDescriptor(descriptor.value, target); //method param dependency injection
+    return (target: Object, propertyKey: string, descriptor: any) => {
+        descriptor.value = processDescriptor(descriptor.value, target, propertyKey); //method param dependency injection
         return Reflect.defineMetadata("custom:annotation:rest-delete", path, target, propertyKey);
     }
 }
 
 
-function processDescriptor(descriptionRef: any, target: Object) { // processing descriptor by setting new args, retrieved from higher order func linkParamDecorator
+function processDescriptor(descriptionRef: any, target: Object, propertyKey: string) { // processing descriptor by setting new args, retrieved from higher order func linkParamDecorator
     return function(...args: any[]) {
-        const newArgs = args.map(linkParamDecorator(args, target));
+        const newArgs = args.map(linkParamDecorator(args, target, propertyKey));
         return descriptionRef.apply(this, newArgs)
     }
 }
 
-function linkParamDecorator(args: any[], target: object) {// link params by decorators
+function linkParamDecorator(args: any[], target: object, propertyKey: string) {// link params by decorators
     return function (arg, index) {
+        let paramData;
         const responseDecorator = target['response-decorator'];
-        if (responseDecorator.findIndex(el => el.index === index) !== -1) {
-            arg = args[0].res;
+        if (responseDecorator && responseDecorator.findIndex(el => el.index === index && el.propertyKey === propertyKey) !== -1) {
+            arg = args[1];
+        }
+        const bodyDecorator = target['body-decorator'];
+        if (bodyDecorator && bodyDecorator.findIndex(el => el.index === index && el.propertyKey === propertyKey) !== -1) {
+            arg = args[0].body;
         }
         const paramDecorator = target['param-decorator'];
-        if(paramDecorator.findIndex(el => el.index === index) !== -1) {
-            arg = args[1].req.params['id']
+        if (paramDecorator && typeof (paramData = paramDecorator.find(el => el.index === index && el.propertyKey === propertyKey)) !== "undefined") {
+            arg = args[0].params[paramData.key]
+        }
+        const headerDecorator = target['header-decorator'];
+        if (headerDecorator && typeof (paramData = headerDecorator.find(el => el.index === index && el.propertyKey === propertyKey)) !== "undefined") {
+            arg = args[0].get(paramData.key)
         }
         return arg;
     }
@@ -78,10 +87,10 @@ function linkParamDecorator(args: any[], target: object) {// link params by deco
 function makeParamDecorator(metadataKey: string, key: any) {
     return function (target: any, propertyKey: string, index: number) {
         if (Array.isArray(target[metadataKey])) {
-            target[metadataKey].push({index, key});
+            target[metadataKey].push({index, key, propertyKey});
         }
         else {
-            target[metadataKey] = [{index, key}];
+            target[metadataKey] = [{index, key, propertyKey}];
         }
     }
 }
@@ -90,8 +99,16 @@ export function param(key: string) {
     return makeParamDecorator('param-decorator', key);
 }
 
+export function header(key: string) {
+    return makeParamDecorator('header-decorator', key);
+}
+
 export function response() {
     return makeParamDecorator('response-decorator', null);
+}
+
+export function body() {
+    return makeParamDecorator('body-decorator', null);
 }
 
 

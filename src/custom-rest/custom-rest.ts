@@ -1,5 +1,6 @@
 import * as express from "express";
 import * as Http from "http";
+import * as bodyParser from "body-parser";
 import * as Io from "socket.io";
 import {
     getInjectRepository,
@@ -13,8 +14,6 @@ import {createConnection} from "typeorm";
 import * as fs from "fs-extra";
 import {AppSettings} from "./app-settings";
 import {RouteContext} from "./route-context";
-
-
 
 
 export class CustomRest {
@@ -79,6 +78,18 @@ export class CustomRest {
             configDb.entities = this.modules.models;
         }
         return await createConnection(configDb);
+    }
+
+    enableCors() {
+        this.expressApp.use(function (req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+            next();
+        });
+    }
+
+    jsonBodyParse() {
+        this.expressApp.use(bodyParser.json());
     }
 
     async runHttp() {
