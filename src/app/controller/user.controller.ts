@@ -55,11 +55,13 @@ export class UserController {
         user.userPushSettings = userPushSettings;
         user.userStats = new UserStats();
 
-        let errors;
-        if ((errors = await validate(user))) {
+        const errors = await validate(user);
+        if (errors.length) {
+            console.log(errors);
             res.status(403).send(errors);
         } else {
-            res.send(await userRepository.save(user));
+            await userRepository.save(user);
+            res.send({status: true});
         }
     }
 }
