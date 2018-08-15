@@ -5,6 +5,10 @@ So to raise my dev skills i will rewrite the app to nowest standards.
 
 In first version i used express.js and sequelize.js.
 
+##How to use it
+- code something and just save! typescript should compile all the file to the dist directory
+- run server.js from dist directory, you should watch with nodemon for example the dist directory
+
 ##In this version i will use:
 - typescript
 - express.js
